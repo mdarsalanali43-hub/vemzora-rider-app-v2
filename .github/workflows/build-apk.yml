@@ -1,0 +1,89 @@
+name: Build Vemzora Rider APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Do not use android-actions/setup-android here. Its setup step can
+      # invoke the obsolete `sdkmanager tools` package, which now fails.
+      - name: Configure Android SDK and accept licenses
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort -V | tail -n 1)"
+          if [[ -z "$SDKMANAGER" ]]; then
+            echo "Android SDK command-line tools (sdkmanager) were not found on the runner." >&2
+            exit 1
+          fi
+
+          yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses >/dev/null || true
+
+          # Read compileSdk from either common Groovy or Kotlin DSL syntax.
+          COMPILE_SDK="$(grep -Eho 'compileSdk(Version)?[[:space:]]*(=|\()?([[:space:]]*)[0-9]+' app/build.gradle app/build.gradle.kts 2>/dev/null | grep -Eo '[0-9]+' | tail -n 1 || true)"
+          if [[ -z "$COMPILE_SDK" ]]; then
+            COMPILE_SDK=35
+            echo "compileSdk was not detected; installing Android API 35 as a fallback."
+          fi
+
+          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" \
+            "platform-tools" \
+            "platforms;android-${COMPILE_SDK}" \
+            "build-tools;35.0.0"
+
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Gradle
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v gradle >/dev/null 2>&1; then
+            GRADLE_VERSION=8.9
+            curl --fail --silent --show-error --location \
+              "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" \
+              --output "$RUNNER_TEMP/gradle.zip"
+            mkdir -p "$RUNNER_TEMP/gradle"
+            unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP/gradle"
+            echo "$RUNNER_TEMP/gradle/gradle-${GRADLE_VERSION}/bin" >> "$GITHUB_PATH"
+          fi
+
+      - name: Build debug APK
+        shell: bash
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: vemzora-rider-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
