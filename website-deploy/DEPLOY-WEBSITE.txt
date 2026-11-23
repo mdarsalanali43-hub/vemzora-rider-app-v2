@@ -1,0 +1,18 @@
+WEBSITE DEPLOYMENT NOTES
+
+This folder contains the website/PWA files supplied in the uploaded package:
+- index.html
+- rider-sw.js
+- rider-manifest.webmanifest
+- rider-icon-192.png
+- rider-icon-512.png
+
+The Android app opens https://vemzora.in/?riderApp=1. These files must be deployed to the ROOT of the vemzora.in website so the URL and service worker paths resolve correctly.
+
+IMPORTANT:
+1. Back up the currently live website before replacing its index.html.
+2. Verify this index.html is the intended full Vemzora website build before deploying.
+3. Deploy all five files to the website root, not into a nested folder.
+4. Test owner and rider on separate devices after deployment.
+
+PWA push event display code is present in rider-sw.js, but no push server / Firebase registration is included. Background push notifications are therefore NOT fully configured by this package.

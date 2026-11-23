@@ -1,0 +1,21 @@
+VEMZORA RIDER PACKAGE — READ FIRST
+
+This ZIP has two separate parts.
+
+A) GITHUB ANDROID APK BUILD
+- The ZIP root itself is the Android Gradle project.
+- Upload ALL files and folders from this ZIP root to the ROOT of a NEW GitHub repository.
+- IMPORTANT: Include the hidden .github folder and its workflows/build-apk.yml file.
+- Do not upload any .env file or secrets.
+- After commit, open Actions > Build Vemzora Rider APK.
+- Download the vemzora-rider-debug-apk artifact from a successful run. Extract it to get app-debug.apk.
+
+B) WEBSITE DEPLOYMENT
+- The website-deploy folder is separate from the Android project.
+- Its contents must be deployed to the ROOT of https://vemzora.in (after backing up and confirming this is the intended website version).
+- The Android app expects https://vemzora.in/?riderApp=1.
+
+C) WHAT IS AND IS NOT INCLUDED
+Included: Android Studio project source, root-level GitHub Actions workflow, full supplied website/PWA files, icons, and deployment instructions.
+Not included: a prebuilt APK, Firebase Cloud Messaging server, production signing key, or guaranteed background push service.
+The first GitHub build produces a DEBUG APK for testing, not a Play Store-ready signed release.
