@@ -6,6 +6,7 @@ plugins {
 android {
     namespace 'in.vemzora.rider'
     compileSdk 35
+
     defaultConfig {
         applicationId 'in.vemzora.rider'
         minSdk 23
@@ -14,5 +15,18 @@ android {
         versionName '1.1.0'
         buildConfigField 'String', 'RIDER_URL', '\"https://vemzora.in/?riderApp=1\"'
     }
-    buildFeatures { buildConfig true }
+
+    // Keep Java and Kotlin bytecode targets aligned.
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
 }
